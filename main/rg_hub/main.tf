@@ -6,7 +6,7 @@ module "rg" {
 
 module "hub" {
     source = "../../modules/hub"
-    resource_group_name = var.resource_group_name
+    resource_group_name = module.rg.resource_group_name
     location = var.location
     environment = var.environment
     hub-name = "ABC-LELP-HUB"
@@ -16,7 +16,7 @@ module "hub" {
 
 module "vm" {
     source = "../../modules/vm"
-    resource_group_name = var.resource_group_name
+    resource_group_name = module.rg.resource_group_name
     location = var.location
     environment = var.environment
     vm-name = "hub-admin"

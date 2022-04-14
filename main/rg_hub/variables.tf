@@ -7,3 +7,11 @@ variable "location" {
     type = string
     default = "koreacentral"
 }
+variable "resource_group_name" {
+    type = string
+    default = "case00"
+}
+variable "environmet" {
+    type = string
+    default = "hub"
+}
