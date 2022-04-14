@@ -11,7 +11,7 @@ variable "resource_group_name" {
     type = string
     default = "case00"
 }
-variable "environmet" {
+variable "environment" {
     type = string
     default = "hub"
 }
