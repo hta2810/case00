@@ -10,3 +10,6 @@ variable "environment" {
 variable "vm-name" {
     type = string
 }
+variable "subnet-id" {
+    type = string
+}

@@ -10,10 +10,17 @@ variable "environment" {
 variable "hub-name" {
     type = string
 }
-variable "address_space" {
-    type = map(string)
-    default = {
-        "address" = "10.0.0.0"
-        "prefix" = "16"
-    }
+# variable "address_space" {
+#     type = map(string)
+#     default = {
+#         "address" = "10.0.0.0"
+#         "prefix" = "16"
+#     }
+# }
+
+variable "hub-vnet-add" {
+    type = string
+}
+variable "hub-mgnt-subnet-add" {
+    type = string
 }
