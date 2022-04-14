@@ -3,7 +3,7 @@ resource "azurerm_virtual_network" "hub-vnet" {
   name                      = "${var.hub-name}"
   location                  = var.location
   resource_group_name       = var.resource_group_name
-  address_space             = var.hub-vnet-add
+  address_space             = [var.hub-vnet-add]
   # address_space             = ["${var.address_space["address"]}/${var.address_space["prefix"]}"]
 
   tags = {
