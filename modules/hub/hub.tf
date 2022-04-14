@@ -23,7 +23,7 @@ resource "azurerm_subnet" "hub-mgnt-subnet" {
     name                    = "${var.hub-name}-mgnt-subnet"
     resource_group_name     = azurerm_virtual_network.hub-vnet.resource_group_name
     virtual_network_name    = azurerm_virtual_network.hub-vnet.name
-    address_prefixes        = var.hub-mgnt-subnet-add
+    address_prefixes        = [var.hub-mgnt-subnet-add]
 }
 
 # resource "azurerm_subnet" "hub-dmz" {
