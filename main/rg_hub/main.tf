@@ -13,3 +13,12 @@ module "hub" {
     hub-vnet-add = "10.0.0.0/16"
     hub-mgnt-subnet-add = "10.0.0.64/27"
 }
+
+module "vm" {
+    source = "../../modules/vm"
+    resource_group_name = var.resource_group_name
+    location = var.location
+    environment = var.environment
+    vm-name = "hub-admin"
+    subnet-id = module.hub.hub-mgnt-subnet-id
+}

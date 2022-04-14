@@ -1,3 +1,3 @@
-output "resource_group_name" {
-    value = "${azurerm_resource_group.rg.name}"
+output "hub-mgnt-subnet-id" {
+    value = "${azurerm_subnet.hub-mgnt-subnet.id}"
 }
