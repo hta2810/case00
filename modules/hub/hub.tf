@@ -43,8 +43,11 @@ resource "azurerm_subnet" "hub-mgnt-subnet" {
 #     allocation_method       = "Dynamic"
 # }
 
-# resource "" "name" {
-  
+# resource "azurerm_virtual_network_gateway" "hub-vnet-gateway" {
+#   name =  "${var.hub-name}-vpn-gateway"
+#   location = var.location
+#   resource_group_name = var.resource_group_name
+
 # }
 
 
