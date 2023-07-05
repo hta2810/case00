@@ -1,0 +1,175 @@
+---
+- hosts: all
+  tasks:
+  - name: Insall nginx
+    apt: 
+      name: nginx
+      state: present
+
+  - name: Copy config file
+    copy:
+      src: /project/application.conf
+      dest: /etc/nginx/sites-enabled/application.conf
+
+  - name: Extract file
+    unarchive:
+      src: /project/www.tar.gz
+      dest: /var/www/html/
+
+  - name: Start nginx
+    command: "service nginx start"
+
+  - name: Test connectivity
+    command: "curl http://localhost/"
+    register: html_output
+
+  - name: Debug task
+    debug: msg={{ html_output }}
+
+
+---
+- hosts: all
+  tasks:
+
+    - name: Include variable file
+      ansible.builtin.include_vars: /project/ansible-vars.yml
+
+    - name: Install all packages
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loops: "{{ packages }}"
+
+    - name: Copy nginx configuration file
+      ansible.builtin.copy:
+        src: {{ server.config }}
+        dest: /etc/nginx/sites-enabled/project.conf
+    
+    - name: Change Nginx configuration - Listen port
+      ansible.builtin.lineinfile:
+        path: {{ server.config }}
+        regexp: 'listen 80'
+        line: listen "{{ server.port }}"
+
+    - name: Start service nginx
+      ansible.builtin.shell: nginx start
+    
+    - name: Download project files
+      ansible.builtin.get_url:
+        url: {{ project.remote_path }}
+        dest: ./
+      regiter: project_files
+    
+    - name: Unarchive project files
+      ansible.builtin.unarchive:
+        src: {{ project_files.dest }}
+        dest: {{ project.destination }}
+
+    - name: Test connectivity
+      ansible.builtin.command: "curl {{ project.url }}"
+      regiter: html_ouput
+
+    - name: Debug task
+      debug: msg={{ html_output }}
+
+
+
+---
+- hosts: all
+  tasks:
+    
+    - name: Include variable file
+      ansible.builtin.include_vars: ./vars.yml
+
+    - name: Ensure SSH-Authorized keys for user C include only the key from ./file/ssh_c.pub
+      ansible.builtin.authorized_key:
+        user: hannah
+        state: present
+        key: "{{ lookup('file', './files/ssh_hannah.pub') }}"
+        exclusive: yes
+    
+    - name: Create new user - "build"
+      ansible.builtin.user:
+        name: build
+        create_home: yes
+        home: /home/build
+        group: ci
+
+    - name: Add new SSH-authorized entry
+      ansible.builtin.authorized_key:
+        user: build
+        key: {{ users.build.key }}
+        comment: {{ users.build.comment }}
+        key_options: 'from="{{ users.build.from }}"'
+
+    - name: Generate new Open-SSH keypair for user
+      ansible.builtin.openssh_keypair:
+        path: /home/report/.ssh/id_ed25519
+        owner: report
+        mode: '0600'
+        type: ed25519
+        size: 2048
+      register: keypair
+
+    - name: Copy public key of user report to authorized_keys of user sos
+      ansible.builtin.authorized_key:
+        user: sos
+        state: present
+        key: "{{ keypair.public_key }}"
+        key_options: "command=\"sosreport\""
+    
+
+  
+
+
+---
+- name: Disable server in 'apps' backend pool #3
+  hosts: haproxylb
+  tasks:
+    - ansible.builtin.haproxy:
+        state: disabled
+        host: '{{ inventory_hostname }}'
+        socket: /tmp/haproxy.sock
+        backend: apps
+
+- serial: 1 #1
+  hosts: appservers #2
+  tasks:
+    
+    - name: Stop application service #4
+      ansible.builtin.command: app_service stop
+
+    - name: Extract upgrade files #5
+      ansible.builtin.unarchive:
+        src: /srv/apps/apps-1.0.zip
+        dest: {{ ansible_user_dir }}/web
+    
+    - name: Start application service #6
+      ansible.builtin.command: app_service start
+
+    - name: Wait for HTTP healthcheck #7
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}/health
+      register: http_output
+      until: http_output.status == 200
+      retries: 10
+      delay: 5
+
+    - name: Get application verison #8
+      ansible.builtin.uri:
+        url: http://{{ inventory_hostname }}/version
+      register: deployed_version
+
+    - name: Create application verison file # 8
+      ansible.builtin.copy:
+        dest: {{ ansible_user_dir }}/deployed_verison
+        content: {{ deployed_version }}
+
+- name: Enable server in 'apps' backend pool #9
+  hosts: haproxylb
+  tasks:
+    - ansible.builtin.haproxy:
+        state: enabled
+        host: '{{ inventory_hostname }}'
+        socket: /tmp/haproxy.sock
+        backend: apps
